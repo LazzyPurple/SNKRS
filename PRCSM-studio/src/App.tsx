@@ -1,25 +1,22 @@
 import "./App.css";
-import { Button } from "./components/ui/button";
-import ProductList from "./components/ProductList";
+import { Routes, Route } from "react-router-dom";
 
-function App() {
+import Layout from "./components/Layout";
+
+import ProductPage from "./pages/ProductPage";
+import Catalogue from "./pages/Catalogue";
+import Panier from "./pages/Panier";
+import Home from "./pages/Home";
+
+export default function App() {
   return (
-    <>
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">PRCSM-Studio 👟</h1>
-        <Button className="bg-black text-white hover:bg-gray-800">
-          Acheter maintenant
-        </Button>
-      </div>
-
-      <div className="p-6">
-        <h1 className="text-3xl font-bold mb-6">
-          Bienvenue sur PRCSM-Studio 👟
-        </h1>
-        <ProductList />
-      </div>
-    </>
+    <Layout>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/catalogue" element={<Catalogue />} />
+        <Route path="/produit/:id" element={<ProductPage />} />
+        <Route path="/panier" element={<Panier />} />
+      </Routes>
+    </Layout>
   );
 }
-
-export default App;

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchProducts } from "../api/shopify";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 export default function ProductList() {
   const { data, isLoading, error } = useQuery({
@@ -18,7 +19,11 @@ export default function ProductList() {
       {data.map((p: any) => (
         <Card key={p.id}>
           <CardHeader>
-            <CardTitle>{p.title}</CardTitle>
+            <CardTitle>
+              <Link to={`/produit/${encodeURIComponent(p.id)}`}>
+              {p.title}
+              </Link>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <img

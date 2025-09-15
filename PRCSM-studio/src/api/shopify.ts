@@ -43,3 +43,40 @@ export async function fetchProducts() {
   console.log("Shopify response:", json);
   return json.data.products.edges.map((e: any) => e.node);
 }
+
+export async function fetchProductById(id: string) {
+  const query = `
+    query getProduct($id: ID!) {
+      product(id: $id) {
+        id
+        title
+        description
+        images(first: 3) {
+          edges { node { url } }
+        }
+        variants(first: 5) {
+          edges {
+            node {
+              id
+              title
+              availableForSale
+              price { amount currencyCode }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Shopify-Storefront-Access-Token": import.meta.env.VITE_SHOPIFY_STOREFRONT_TOKEN,
+    },
+    body: JSON.stringify({ query, variables: { id } }),
+  });
+
+  const json = await res.json();
+  return json.data.product;
+}
