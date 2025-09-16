@@ -88,37 +88,16 @@ export async function fetchProductById(id: string) {
 }
 
 // Créer un panier
-export async function createCart() {
-  const query = `
-    mutation {
-      cartCreate {
-        cart {
-          id
-          checkoutUrl
-        }
-      }
-    }
-  `;
-
-  const data = await shopifyFetch<{
-    cartCreate: { cart: { id: string; checkoutUrl: string } };
-  }>(query);
-  return data.cartCreate.cart;
-}
-
-// Ajouter un produit au panier
-export async function addToCart(
-  cartId: string,
-  variantId: string,
-  quantity = 1
+export async function createCart(
+  lines: { merchandiseId: string; quantity?: number }[] = []
 ) {
   const query = `
-    mutation addLine($cartId: ID!, $lines: [CartLineInput!]!) {
-      cartLinesAdd(cartId: $cartId, lines: $lines) {
+    mutation CreateCart($lines: [CartLineInput!]) {
+      cartCreate(input: { lines: $lines }) {
         cart {
           id
           checkoutUrl
-          lines(first: 10) {
+          lines(first: 50) {
             edges {
               node {
                 id
@@ -127,7 +106,12 @@ export async function addToCart(
                   ... on ProductVariant {
                     id
                     title
-                    product { title }
+                    product { 
+                      title
+                      images(first: 1) {
+                        edges { node { url } }
+                      }
+                    }
                     price { amount currencyCode }
                   }
                 }
@@ -138,12 +122,51 @@ export async function addToCart(
       }
     }
   `;
+  const variables = { lines };
+  const data = await shopifyFetch<{ cartCreate: { cart: any } }>(
+    query,
+    variables
+  );
+  return data.cartCreate.cart;
+}
 
-  const variables = {
-    cartId,
-    lines: [{ merchandiseId: variantId, quantity }],
-  };
-
+// Ajouter un produit au panier
+export async function addToCart(
+  cartId: string,
+  lines: { merchandiseId: string; quantity?: number }[]
+) {
+  const query = `
+    mutation AddToCart($cartId: ID!, $lines: [CartLineInput!]!) {
+      cartLinesAdd(cartId: $cartId, lines: $lines) {
+        cart {
+          id
+          checkoutUrl
+          lines(first: 50) {
+            edges {
+              node {
+                id
+                quantity
+                merchandise {
+                  ... on ProductVariant {
+                    id
+                    title
+                    product { 
+                      title
+                      images(first: 1) {
+                        edges { node { url } }
+                      }
+                    }
+                    price { amount currencyCode }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+  const variables = { cartId, lines };
   const data = await shopifyFetch<{ cartLinesAdd: { cart: any } }>(
     query,
     variables
