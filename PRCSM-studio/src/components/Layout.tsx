@@ -1,39 +1,80 @@
-import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
-
-type LayoutProps = {
-  children: ReactNode;
-};
-
-export default function Layout({ children }: LayoutProps) {
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="dark min-h-screen flex flex-col bg-background text-foreground">
       {/* Header */}
-      <header className="bg-white shadow-md sticky top-0 z-10">
+      <header className=" border-b border-border">
         <nav className="container mx-auto flex justify-between items-center p-4">
-          <Link to="/" className="text-xl font-bold">
+          <a href="/" className="text-xl font-bold text-primary">
             PRCSM-Studio
-          </Link>
+          </a>
           <div className="flex gap-6">
-            <Link to="/" className="hover:underline">
-              Accueil
-            </Link>
-            <Link to="/catalogue" className="hover:underline">
-              Catalogue
-            </Link>
-            <Link to="/panier" className="hover:underline">
-              Panier
-            </Link>
+            <a href="/">Accueil</a>
+            <a href="/catalogue">Catalogue</a>
+            <a href="/panier">Panier</a>
           </div>
         </nav>
       </header>
 
-      {/* Main */}
+      {/* Main content pousse le footer */}
       <main className="flex-1 container mx-auto px-6 py-8">{children}</main>
 
-      {/* Footer */}
-      <footer className="bg-black text-white py-4 text-center">
-        <p className="text-sm">© 2025 PRCSM-Studio - Tous droits réservés</p>
+      {/* Footer stick en bas */}
+      <footer className="bg-zinc-950 border-t border-zinc-800 py-6">
+        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-zinc-400">
+          {/* Copyright */}
+          <p className="text-center md:text-left">
+            © 2025{" "}
+            <span className="text-primary font-semibold">PRCSM-Studio</span>.
+            Tous droits réservés.
+          </p>
+
+          {/* Links */}
+          <div className="flex gap-6 text-xs uppercase tracking-wide">
+            <a
+              href="/mentions-legales"
+              className="hover:text-primary transition-colors"
+            >
+              Mentions légales
+            </a>
+            <a
+              href="/confidentialite"
+              className="hover:text-primary transition-colors"
+            >
+              Confidentialité
+            </a>
+            <a href="/contact" className="hover:text-primary transition-colors">
+              Contact
+            </a>
+          </div>
+
+          {/* Socials */}
+          <div className="flex gap-4">
+            <a
+              href="https://instagram.com"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-primary transition-colors"
+            >
+              IG
+            </a>
+            <a
+              href="https://tiktok.com"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-primary transition-colors"
+            >
+              TikTok
+            </a>
+            <a
+              href="https://twitter.com"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-primary transition-colors"
+            >
+              X
+            </a>
+          </div>
+        </div>
       </footer>
     </div>
   );
