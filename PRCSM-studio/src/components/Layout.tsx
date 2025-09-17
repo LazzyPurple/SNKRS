@@ -1,8 +1,8 @@
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen w-screen flex flex-col bg-prcsm-black text-prcsm-white overflow-x-hidden">
-      {/* Header */}
-      <header className="w-full border-b border-border">
+    <div className="h-screen w-screen flex flex-col bg-prcsm-black text-prcsm-white overflow-hidden">
+      {/* Header - Fixed at top */}
+      <header className="w-full border-b border-border sticky top-0 z-50 bg-prcsm-black">
         <nav className="w-full flex justify-between items-center px-6 py-4">
           <a href="/" className="text-xl font-bold text-primary">
             PRCSM-Studio
@@ -15,11 +15,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </nav>
       </header>
 
-      {/* Main content pousse le footer */}
-      <main className="flex-1 w-screen flex flex-col min-h-0">{children}</main>
+      {/* Main content - Takes remaining space */}
+      <main className="flex-1 w-screen flex flex-col min-h-0 overflow-y-auto">{children}</main>
 
-      {/* Footer stick en bas */}
-      <footer className="w-full bg-prcsm-black border-t border-prcsm-gray py-4 mt-auto">
+      {/* Footer - Fixed at bottom */}
+      <footer className="w-full bg-prcsm-black border-t border-prcsm-gray py-4 sticky bottom-0 z-50">
         <div className="w-full flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-zinc-400 px-6">
           {/* Copyright */}
           <p className="text-center md:text-left">
