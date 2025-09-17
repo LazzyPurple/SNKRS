@@ -1,12 +1,10 @@
-import { useCart } from "@/context/CartContext";
-import { useEffect } from "react";
-
 export default function Home() {
-  const { resetCart } = useCart();
-
-  useEffect(() => {
-    resetCart();
-  }, []);
-
-  return <h1 className="text-2xl font-bold">Bienvenue sur PRCSM-Studio 👟</h1>;
+  return (
+    <div className="h-screen w-screen bg-prcsm-black text-prcsm-white flex flex-col items-center justify-center">
+      <h1 className="text-5xl font-orbitron text-prcsm-violet">PRCSM Studio</h1>
+      <p className="mt-4 text-lg font-lato text-prcsm-gray">
+        Welcome to the shop ⚡
+      </p>
+    </div>
+  );
 }
