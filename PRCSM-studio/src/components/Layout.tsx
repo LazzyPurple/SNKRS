@@ -1,9 +1,9 @@
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="dark min-h-screen flex flex-col bg-background text-foreground">
+    <div className="min-h-screen w-screen flex flex-col bg-prcsm-black text-prcsm-white overflow-x-hidden">
       {/* Header */}
-      <header className=" border-b border-border">
-        <nav className="container mx-auto flex justify-between items-center p-4">
+      <header className="w-full border-b border-border">
+        <nav className="w-full flex justify-between items-center px-6 py-4">
           <a href="/" className="text-xl font-bold text-primary">
             PRCSM-Studio
           </a>
@@ -16,11 +16,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main content pousse le footer */}
-      <main className="flex-1 container mx-auto px-6 py-8">{children}</main>
+      <main className="flex-1 w-screen flex flex-col min-h-0">{children}</main>
 
       {/* Footer stick en bas */}
-      <footer className="bg-prcsm-black border-t border-prcsm-gray py-4 text-center">
-        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-zinc-400">
+      <footer className="w-full bg-prcsm-black border-t border-prcsm-gray py-4 mt-auto">
+        <div className="w-full flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-zinc-400 px-6">
           {/* Copyright */}
           <p className="text-center md:text-left">
             © 2025{" "}

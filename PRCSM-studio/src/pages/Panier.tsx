@@ -8,8 +8,9 @@ export default function Panier() {
   const lines = cart?.lines?.edges ?? [];
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6 text-center">Votre panier</h1>
+    <div className="flex-1 w-full flex flex-col bg-prcsm-black text-prcsm-white">
+      <div className="w-full px-6 py-8">
+        <h1 className="text-4xl font-orbitron text-prcsm-violet mb-6 text-center">Votre panier</h1>
 
       {lines.length === 0 ? (
         <p className="text-center">Votre panier est vide.</p>
@@ -55,6 +56,7 @@ export default function Panier() {
           </p>
         </>
       )}
+      </div>
     </div>
   );
 }
