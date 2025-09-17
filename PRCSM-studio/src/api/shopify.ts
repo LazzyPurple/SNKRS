@@ -173,3 +173,126 @@ export async function addToCart(
   );
   return data.cartLinesAdd.cart;
 }
+
+// Customer Authentication Functions
+
+// Create a new customer account
+export async function customerCreate(
+  email: string,
+  password: string,
+  firstName?: string,
+  lastName?: string
+) {
+  const query = `
+    mutation CustomerCreate($input: CustomerCreateInput!) {
+      customerCreate(input: $input) {
+        customer {
+          id
+          email
+          firstName
+          lastName
+        }
+        customerUserErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+  
+  const variables = {
+    input: {
+      email,
+      password,
+      firstName,
+      lastName,
+    },
+  };
+  
+  const data = await shopifyFetch<{ customerCreate: any }>(query, variables);
+  return data.customerCreate;
+}
+
+// Create customer access token (login)
+export async function customerAccessTokenCreate(email: string, password: string) {
+  const query = `
+    mutation CustomerAccessTokenCreate($input: CustomerAccessTokenCreateInput!) {
+      customerAccessTokenCreate(input: $input) {
+        customerAccessToken {
+          accessToken
+          expiresAt
+        }
+        customerUserErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+  
+  const variables = {
+    input: {
+      email,
+      password,
+    },
+  };
+  
+  const data = await shopifyFetch<{ customerAccessTokenCreate: any }>(query, variables);
+  return data.customerAccessTokenCreate;
+}
+
+// Delete customer access token (logout)
+export async function customerAccessTokenDelete(customerAccessToken: string) {
+  const query = `
+    mutation CustomerAccessTokenDelete($customerAccessToken: String!) {
+      customerAccessTokenDelete(customerAccessToken: $customerAccessToken) {
+        deletedAccessToken
+        deletedCustomerAccessTokenId
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+  
+  const variables = { customerAccessToken };
+  
+  const data = await shopifyFetch<{ customerAccessTokenDelete: any }>(query, variables);
+  return data.customerAccessTokenDelete;
+}
+
+// Get customer information
+export async function getCustomer(customerAccessToken: string) {
+  const query = `
+    query GetCustomer($customerAccessToken: String!) {
+      customer(customerAccessToken: $customerAccessToken) {
+        id
+        email
+        firstName
+        lastName
+        phone
+        createdAt
+        updatedAt
+        defaultAddress {
+          id
+          firstName
+          lastName
+          company
+          address1
+          address2
+          city
+          province
+          country
+          zip
+          phone
+        }
+      }
+    }
+  `;
+  
+  const variables = { customerAccessToken };
+  
+  const data = await shopifyFetch<{ customer: any }>(query, variables);
+  return data.customer;
+}

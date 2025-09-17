@@ -1,6 +1,4 @@
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 import SpriteLogo from '@/components/brand/SpriteLogo';
 
@@ -77,7 +75,7 @@ export default function Hero({ className = '' }: HeroProps) {
       {/* Hero Content - Central Container */}
       <div className="relative z-10 flex items-center justify-center min-h-screen px-4 py-20">
         <motion.div
-          className="w-full max-w-md mx-auto bg-black border-2 border-white shadow-[8px_8px_0px_0px_rgba(139,92,246,1)] hover:shadow-[12px_12px_0px_0px_rgba(139,92,246,1)] hover:translate-x-[-4px] hover:translate-y-[-4px] transition-all duration-200 p-8 md:p-12"
+          className="w-full max-w-md mx-auto bg-black border-2 border-white shadow-brutal hover:shadow-brutal-hover hover:translate-x-[-4px] hover:translate-y-[-4px] transition-all duration-200 p-8 md:p-12"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -149,7 +147,7 @@ export default function Hero({ className = '' }: HeroProps) {
                   className="flex-1 bg-transparent border-2 border-white text-white placeholder:text-gray-400 px-4 py-3 font-mono text-sm focus:outline-none focus:border-violet-500 hover:border-violet-300 transition-colors duration-200"
                 />
                 <button
-                  className="border-2 border-violet-500 text-white bg-transparent hover:bg-violet-500 px-6 py-3 font-mono text-xs uppercase tracking-wider transition-all duration-200 hover:shadow-[4px_4px_0px_0px_rgba(139,92,246,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] whitespace-nowrap"
+                  className="border-2 border-violet-500 text-white bg-transparent hover:bg-violet-500 px-6 py-3 font-mono text-xs uppercase tracking-wider transition-all duration-200 shadow-brutal-sm hover:shadow-brutal hover:translate-x-[-2px] hover:translate-y-[-2px] whitespace-nowrap"
                 >
                   Subscribe
                 </button>
@@ -186,18 +184,10 @@ export default function Hero({ className = '' }: HeroProps) {
                   </li>
                   <li>
                     <Link 
-                      to="/archive" 
+                      to="/login" 
                       className="text-gray-400 font-orbitron font-bold text-sm uppercase tracking-wider hover:text-white hover:text-violet-400 transition-all duration-200 block"
                     >
-                      ARCHIVE
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
-                      to="/shipping" 
-                      className="text-gray-400 font-orbitron font-bold text-sm uppercase tracking-wider hover:text-white hover:text-violet-400 transition-all duration-200 block"
-                    >
-                      SHIPPING
+                      LOGIN
                     </Link>
                   </li>
                   <li>
@@ -210,10 +200,10 @@ export default function Hero({ className = '' }: HeroProps) {
                   </li>
                   <li>
                     <Link 
-                      to="/stores" 
+                      to="/signup" 
                       className="text-gray-400 font-orbitron font-bold text-sm uppercase tracking-wider hover:text-white hover:text-violet-400 transition-all duration-200 block"
                     >
-                      STORES
+                      REGISTER
                     </Link>
                   </li>
                 </ul>
