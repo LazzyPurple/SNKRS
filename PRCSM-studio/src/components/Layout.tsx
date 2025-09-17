@@ -19,7 +19,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 container mx-auto px-6 py-8">{children}</main>
 
       {/* Footer stick en bas */}
-      <footer className="bg-zinc-950 border-t border-zinc-800 py-6">
+      <footer className="bg-prcsm-black border-t border-prcsm-gray py-4 text-center">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-zinc-400">
           {/* Copyright */}
           <p className="text-center md:text-left">
