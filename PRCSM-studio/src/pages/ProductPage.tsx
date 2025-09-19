@@ -4,7 +4,7 @@ import { fetchProductByHandle } from "../api/shopify";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCart } from "@/context/CartContext";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { ShopifyProduct, NormalizedVariant } from "@/types/shopify.types";
 import { MEN_SIZES, WOMEN_SIZES, KIDS_SIZES } from "@/types/shopify.types";
 import { normalizeVariants, inferGenderFromTags } from "@/utils/variants";
@@ -34,7 +34,7 @@ export default function ProductPage() {
   const [selectedGender, setSelectedGender] = useState<'men' | 'women' | 'kids'>(defaultGender);
 
   // Update selectedGender when product loads
-  useMemo(() => {
+  useEffect(() => {
     if (product) {
       setSelectedGender(inferGenderFromTags(product.tags));
     }
