@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchProducts } from "../api/shopify";
+import { fetchProducts, type ProductCard } from "../api/shopify";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
 export default function ProductList() {
   const { data, isLoading, error } = useQuery({
-    queryKey: ["products"],
-    queryFn: fetchProducts,
+    queryKey: ["products"] as const,
+    queryFn: () => fetchProducts({ first: 24 }),
   });
 
   if (isLoading) return <p>Chargement...</p>;
@@ -16,24 +16,24 @@ export default function ProductList() {
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-      {data.map((p: any) => (
+      {data.nodes.map((p: ProductCard) => (
         <Card key={p.id}>
           <CardHeader>
             <CardTitle>
-              <Link to={`/produit/${encodeURIComponent(p.id)}`}>
+              <Link to={`/product/${encodeURIComponent(p.handle)}`}>
               {p.title}
               </Link>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <img
-              src={p.images.edges[0]?.node.url}
+              src={p.images.nodes[0]?.url}
               alt={p.title}
               className="rounded mb-2"
             />
             <p className="mb-2 font-semibold">
-              {p.variants.edges[0].node.price.amount}{" "}
-              {p.variants.edges[0].node.price.currencyCode}
+              {p.priceRange.minVariantPrice.amount}{" "}
+              {p.priceRange.minVariantPrice.currencyCode}
             </p>
             <Button className="w-full bg-black text-white">
               Ajouter au panier
