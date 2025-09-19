@@ -1,0 +1,29 @@
+{
+  "name": "snkrs",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LazzyPurple/SNKRS.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LazzyPurple/SNKRS/issues"
+  },
+  "homepage": "https://github.com/LazzyPurple/SNKRS#readme",
+  "dependencies": {
+    "@tanstack/react-query": "^5.87.4",
+    "dotenv": "^17.2.2",
+    "node-fetch": "^3.3.2",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "sneaks-api": "^1.2.3"
+  }
+}
