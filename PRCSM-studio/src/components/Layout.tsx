@@ -7,16 +7,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const isHomepage = location.pathname === '/';
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-prcsm-black text-prcsm-white overflow-hidden">
-      {/* Header - Hidden on homepage */}
+    <div className="min-h-screen w-screen bg-prcsm-black text-prcsm-white overflow-x-hidden">
+      {/* Header - Hidden on homepage, sticky positioning */}
       {!isHomepage && <Header />}
 
-      {/* Main content - Takes remaining space */}
-      <main className="flex-1 w-screen flex flex-col min-h-0 overflow-y-auto">
+      {/* Main content - Natural height based on content */}
+      <main className="w-screen">
         {children}
       </main>
 
-      {/* Footer - Hidden on homepage */}
+      {/* Footer - Hidden on homepage, appears after content */}
       {!isHomepage && <Footer />}
     </div>
   );

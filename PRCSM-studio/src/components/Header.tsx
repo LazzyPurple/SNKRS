@@ -1,88 +1,115 @@
-import { NavLink } from 'react-router-dom';
-import { useCart } from '@/context/CartContext';
-import logoSvg from '@/assets/logo.svg';
+import { NavLink, Link } from "react-router-dom";
+import { useCart } from "@/context/CartContext";
+import logoUrl from "@/assets/logo.svg";
 
-const navItems = [
-  { to: '/', label: 'Accueil' },
-  { to: '/catalogue', label: 'Shop' },
-  { to: '/lookbook', label: 'Lookbook' },
-  { to: '/profile', label: 'Profile' },
-  { to: '/panier', label: 'Panier', hasCartBadge: true },
-];
+type CartShape = {
+  id: string;
+  checkoutUrl?: string;
+  lines?: { edges: { node: { quantity: number } }[] };
+  cost?: unknown;
+};
 
-function getNavLinkClassName({ isActive }: { isActive: boolean }) {
-  return `px-3 py-2 border-2 font-bold text-xs uppercase tracking-wide transition-all duration-200 relative ${
-    isActive
-      ? 'bg-prcsm-violet text-prcsm-black border-prcsm-violet'
-      : 'bg-prcsm-black text-prcsm-white border-prcsm-white hover:bg-prcsm-violet hover:text-prcsm-black hover:border-prcsm-violet'
-  } focus:outline-none focus:ring-2 focus:ring-prcsm-violet focus:ring-offset-2 focus:ring-offset-prcsm-black`;
+type CartLine = {
+  id?: string;
+  variantId: string;
+  quantity: number;
+  title?: string;
+  price?: { amount: string; currencyCode: string };
+};
+
+function cx(...c: Array<string | false | undefined>) {
+  return c.filter(Boolean).join(" ");
+}
+
+function countCartItems(cart: CartShape | null, optimistic: CartLine[] = []) {
+  let base = 0;
+  if (cart?.lines?.edges) {
+    base = cart.lines.edges.reduce(
+      (s: number, e: { node: { quantity: number } }) => s + (e?.node?.quantity ?? 1),
+      0
+    );
+  } else if (Array.isArray((cart as unknown as { lines: CartLine[] })?.lines)) {
+    base = (cart as unknown as { lines: CartLine[] }).lines.reduce((s: number, l: CartLine) => s + (l?.quantity ?? 1), 0);
+  } else if (Array.isArray((cart as unknown as { items: CartLine[] })?.items)) {
+    base = (cart as unknown as { items: CartLine[] }).items.reduce((s: number, l: CartLine) => s + (l?.quantity ?? 1), 0);
+  }
+  const optimisticCount = Array.isArray(optimistic)
+    ? optimistic.reduce((s, l: CartLine) => s + (l?.quantity ?? 1), 0)
+    : 0;
+  return base + optimisticCount;
 }
 
 export default function Header() {
-  const { cart, localLines } = useCart();
-  
-  // Calculate total cart items from both Shopify cart and local optimistic updates
-  const cartItemCount = (() => {
-    let total = 0;
-    
-    // Add items from Shopify cart
-    if (cart?.lines?.edges) {
-      total += cart.lines.edges.reduce((sum, edge) => sum + edge.node.quantity, 0);
-    }
-    
-    // Add items from local optimistic updates
-    total += localLines.reduce((sum, line) => sum + line.quantity, 0);
-    
-    return total;
-  })();
+  const { cart, localLines } = useCart?.() ?? { cart: null, localLines: [] };
+  const cartCount = countCartItems(cart, localLines);
+
+  const nav = [
+    { to: "/", label: "Accueil" },
+    { to: "/catalogue", label: "Catalogue" },
+    { to: "/lookbook", label: "Lookbook" },
+    { to: "/profile", label: "Profile" },
+  ];
 
   return (
-    <header className="w-full border-b-2 border-prcsm-white sticky top-0 z-50 bg-prcsm-black">
-      <nav 
-        className="w-full flex justify-between items-center px-6 py-4"
-        aria-label="Primary navigation"
-      >
-        {/* Logo and Brand */}
-        <div className="flex items-center gap-3">
-          {/* PRCSM Studio Logo */}
-          <img 
-            src={logoSvg}
-            alt="PRCSM Studio Logo"
-            width="24" 
-            height="24" 
-            className="text-prcsm-violet"
+    <header className="sticky top-0 z-50 w-full bg-prcsm-black text-prcsm-white border-b-2 border-prcsm-violet">
+      <div className="mx-auto max-w-6xl px-6 py-3 grid grid-cols-3 items-center">
+        {/* Brand - left */}
+        <Link to="/" className="flex items-center gap-3 justify-self-start text-prcsm-white visited:text-prcsm-white">
+          <img
+            src={logoUrl}
+            alt="PRCSM"
+            className="h-7 w-7 select-none"
+            draggable={false}
           />
-          
-          <span className="text-lg font-bold text-prcsm-white font-orbitron">
-            PRCSM studio
+          <span className="font-orbitron text-lg tracking-wide">
+            PRCSM Studio
           </span>
-        </div>
+        </Link>
 
-        {/* Navigation Chips */}
-        <div className="flex gap-2">
-          {navItems.map((item) => (
-            <div key={item.to} className="relative">
-              <NavLink
-                to={item.to}
-                className={getNavLinkClassName}
-                aria-label={item.hasCartBadge ? `${item.label} (${cartItemCount} items)` : item.label}
-              >
-                {item.label}
-              </NavLink>
-              
-              {/* Cart Badge */}
-              {item.hasCartBadge && cartItemCount > 0 && (
-                <div 
-                  className="absolute -top-1 -right-1 bg-prcsm-violet text-prcsm-black text-xs font-bold w-5 h-5 flex items-center justify-center border border-prcsm-white text-center leading-none"
-                  aria-label={`${cartItemCount} items in cart`}
-                >
-                  {cartItemCount > 9 ? '9+' : cartItemCount}
-                </div>
-              )}
-            </div>
+        {/* Nav - centered */}
+        <nav aria-label="Primary" className="flex items-center gap-3 justify-self-center">
+          {nav.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                cx(
+                  "px-3 py-1.5 border-2 rounded-none select-none",
+                  "border-white text-prcsm-white visited:text-prcsm-white bg-prcsm-black",
+                  "transition-colors hover:border-prcsm-violet",
+                  "focus-visible:outline-none focus-visible:border-prcsm-violet focus-visible:shadow-[4px_4px_0_0_#A488EF]",
+                  isActive &&
+                    "border-prcsm-violet shadow-[4px_4px_0_0_#A488EF]"
+                )
+              }
+            >
+              {item.label}
+            </NavLink>
           ))}
+        </nav>
+
+        {/* Cart - right */}
+        <div className="justify-self-end">
+          <NavLink
+            to="/panier"
+            className={({ isActive }) =>
+              cx(
+                "relative px-3 py-1.5 border-2 rounded-none",
+                "border-white text-prcsm-white visited:text-prcsm-white bg-prcsm-black",
+                "transition-colors hover:border-prcsm-violet",
+                "focus-visible:outline-none focus-visible:border-prcsm-violet focus-visible:shadow-[4px_4px_0_0_#A488EF]",
+                isActive &&
+                  "border-prcsm-violet shadow-[4px_4px_0_0_#A488EF]"
+              )
+            }
+          >
+            Panier
+            <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold border-2 rounded-none border-white bg-prcsm-violet text-prcsm-black">
+              {cartCount}
+            </span>
+          </NavLink>
         </div>
-      </nav>
+      </div>
     </header>
   );
 }
