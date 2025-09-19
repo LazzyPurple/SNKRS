@@ -1,5 +1,5 @@
 import "./App.css";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
 
 import Layout from "./components/Layout";
 
@@ -13,13 +13,25 @@ import Shipping from "./pages/Shipping";
 import Contact from "./pages/Contact";
 import Stores from "./pages/Stores";
 
+// Component to handle redirect from /product/:handle to /produit/:handle
+function RedirectToCanonical() {
+  const { handle } = useParams<{ handle: string }>();
+  return <Navigate to={`/produit/${handle}`} replace />;
+}
+
 export default function App() {
   return (
     <Layout>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/catalogue" element={<Catalogue />} />
-        <Route path="/product/:handle" element={<ProductPage />} />
+        {/* Canonical PDP route */}
+        <Route path="/produit/:handle" element={<ProductPage />} />
+        {/* Alias redirect to canonical route */}
+        <Route 
+          path="/product/:handle" 
+          element={<RedirectToCanonical />} 
+        />
         <Route path="/panier" element={<Panier />} />
         <Route path="/lookbook" element={<Lookbook />} />
         <Route path="/archive" element={<Archive />} />

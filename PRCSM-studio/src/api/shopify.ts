@@ -5,9 +5,12 @@ export type ProductCard = {
   id: string;
   title: string;
   handle: string;
+  vendor: string;
+  tags: string[];
   images: {
     nodes: {
       url: string;
+      altText?: string;
     }[];
   };
   priceRange: {
@@ -16,6 +19,43 @@ export type ProductCard = {
       currencyCode: string;
     };
   };
+  variants: {
+    nodes: {
+      id: string;
+      availableForSale: boolean;
+      selectedOptions: {
+        name: string;
+        value: string;
+      }[];
+    }[];
+  };
+};
+
+export type ProductsResponse = {
+  nodes: ProductCard[];
+  pageInfo: {
+    hasNextPage: boolean;
+    endCursor: string | null;
+  };
+};
+
+export type ProductFilters = {
+  gender?: string[];
+  brand?: string[];
+  color?: string[];
+  height?: string[];
+  silhouette?: string[];
+};
+
+export type ProductSort = 'TITLE' | 'PRICE' | 'CREATED_AT' | 'BEST_SELLING';
+
+export type FetchProductsParams = {
+  first?: number;
+  after?: string;
+  sortKey?: ProductSort;
+  reverse?: boolean;
+  filters?: ProductFilters;
+  query?: string;
 };
 
 async function shopifyFetch<T>(
@@ -121,31 +161,100 @@ export async function addToCart(
 }
 
 // ---- Fetch products
-export async function fetchProducts({ first = 10 }: { first: number }) {
+// Helper function to build query string from filters
+function buildFilterQuery(filters?: ProductFilters): string {
+  if (!filters) return '';
+  
+  const queryParts: string[] = [];
+  
+  if (filters.gender?.length) {
+    const genderTags = filters.gender.map(g => `tag:'gender:${g}'`).join(' OR ');
+    queryParts.push(`(${genderTags})`);
+  }
+  
+  if (filters.brand?.length) {
+    const brandTags = filters.brand.map(b => `tag:'brand:${b}'`).join(' OR ');
+    queryParts.push(`(${brandTags})`);
+  }
+  
+  if (filters.color?.length) {
+    const colorTags = filters.color.map(c => `tag:'color:${c}'`).join(' OR ');
+    queryParts.push(`(${colorTags})`);
+  }
+  
+  if (filters.height?.length) {
+    const heightTags = filters.height.map(h => `tag:'height:${h}'`).join(' OR ');
+    queryParts.push(`(${heightTags})`);
+  }
+  
+  if (filters.silhouette?.length) {
+    const silhouetteTags = filters.silhouette.map(s => `tag:'silhouette:${s}'`).join(' OR ');
+    queryParts.push(`(${silhouetteTags})`);
+  }
+  
+  return queryParts.join(' AND ');
+}
+
+export async function fetchProducts(params: FetchProductsParams = {}): Promise<ProductsResponse> {
+  const { 
+    first = 24, 
+    after, 
+    sortKey = 'CREATED_AT', 
+    reverse = true, 
+    filters,
+    query: customQuery 
+  } = params;
+  
+  const filterQuery = buildFilterQuery(filters);
+  const finalQuery = customQuery || filterQuery;
+  
   const query = `
-    query Products($first: Int!) {
-      products(first: $first) {
+    query Products($first: Int!, $after: String, $sortKey: ProductSortKeys!, $reverse: Boolean!, $query: String) {
+      products(first: $first, after: $after, sortKey: $sortKey, reverse: $reverse, query: $query) {
         nodes {
           id
           title
           handle
+          vendor
+          tags
           images(first: 5) {
-            nodes {
-              url
-            }
+          nodes {
+            url
+            altText
           }
+        }
           priceRange {
             minVariantPrice {
               amount
               currencyCode
             }
           }
+          variants(first: 50) {
+            nodes {
+              id
+              availableForSale
+              selectedOptions {
+                name
+                value
+              }
+            }
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
         }
       }
     }
   `;
   
-  const data = await shopifyFetch<{ products: { nodes: ProductCard[] } }>(query, { first });
+  const data = await shopifyFetch<{ products: ProductsResponse }>(query, { 
+    first, 
+    after, 
+    sortKey, 
+    reverse, 
+    query: finalQuery || null 
+  });
   return data.products;
 }
 
