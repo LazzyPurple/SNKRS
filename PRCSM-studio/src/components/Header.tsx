@@ -2,46 +2,13 @@ import { NavLink, Link } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import logoUrl from "@/assets/logo.svg";
 
-type CartShape = {
-  id: string;
-  checkoutUrl?: string;
-  lines?: { edges: { node: { quantity: number } }[] };
-  cost?: unknown;
-};
-
-type CartLine = {
-  id?: string;
-  variantId: string;
-  quantity: number;
-  title?: string;
-  price?: { amount: string; currencyCode: string };
-};
-
 function cx(...c: Array<string | false | undefined>) {
   return c.filter(Boolean).join(" ");
 }
 
-function countCartItems(cart: CartShape | null, optimistic: CartLine[] = []) {
-  let base = 0;
-  if (cart?.lines?.edges) {
-    base = cart.lines.edges.reduce(
-      (s: number, e: { node: { quantity: number } }) => s + (e?.node?.quantity ?? 1),
-      0
-    );
-  } else if (Array.isArray((cart as unknown as { lines: CartLine[] })?.lines)) {
-    base = (cart as unknown as { lines: CartLine[] }).lines.reduce((s: number, l: CartLine) => s + (l?.quantity ?? 1), 0);
-  } else if (Array.isArray((cart as unknown as { items: CartLine[] })?.items)) {
-    base = (cart as unknown as { items: CartLine[] }).items.reduce((s: number, l: CartLine) => s + (l?.quantity ?? 1), 0);
-  }
-  const optimisticCount = Array.isArray(optimistic)
-    ? optimistic.reduce((s, l: CartLine) => s + (l?.quantity ?? 1), 0)
-    : 0;
-  return base + optimisticCount;
-}
-
 export default function Header() {
-  const { cart, localLines } = useCart?.() ?? { cart: null, localLines: [] };
-  const cartCount = countCartItems(cart, localLines);
+  const { getTotalQuantity } = useCart?.() ?? { getTotalQuantity: () => 0 };
+  const cartCount = getTotalQuantity();
 
   const nav = [
     { to: "/", label: "Accueil" },

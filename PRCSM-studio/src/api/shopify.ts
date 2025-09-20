@@ -160,6 +160,48 @@ export async function addToCart(
   return data.cartLinesAdd.cart;
 }
 
+// ---- Update cart lines
+export async function updateCartLines(
+  cartId: string,
+  lines: { id: string; quantity: number }[]
+) {
+  const query = `
+    mutation UpdateCartLines($cartId: ID!, $lines: [CartLineUpdateInput!]!) {
+      cartLinesUpdate(cartId: $cartId, lines: $lines) {
+        cart { ${CART_FIELDS} }
+        userErrors { field message }
+      }
+    }
+  `;
+  const data = await shopifyFetch<{
+    cartLinesUpdate: { cart: any; userErrors: any[] };
+  }>(query, { cartId, lines });
+  if (data.cartLinesUpdate.userErrors?.length)
+    console.warn("cartLinesUpdate errors:", data.cartLinesUpdate.userErrors);
+  return data.cartLinesUpdate.cart;
+}
+
+// ---- Remove cart lines
+export async function removeCartLines(
+  cartId: string,
+  lineIds: string[]
+) {
+  const query = `
+    mutation RemoveCartLines($cartId: ID!, $lineIds: [ID!]!) {
+      cartLinesRemove(cartId: $cartId, lineIds: $lineIds) {
+        cart { ${CART_FIELDS} }
+        userErrors { field message }
+      }
+    }
+  `;
+  const data = await shopifyFetch<{
+    cartLinesRemove: { cart: any; userErrors: any[] };
+  }>(query, { cartId, lineIds });
+  if (data.cartLinesRemove.userErrors?.length)
+    console.warn("cartLinesRemove errors:", data.cartLinesRemove.userErrors);
+  return data.cartLinesRemove.cart;
+}
+
 // ---- Fetch products
 // Helper function to build query string from filters
 function buildFilterQuery(filters?: ProductFilters): string {
