@@ -17,8 +17,8 @@ function QuantityStepper({
 }) {
   const [localQuantity, setLocalQuantity] = useState(currentQuantity);
   const [showSyncIndicator, setShowSyncIndicator] = useState(false);
-  const debounceRef = useRef<NodeJS.Timeout>();
-  const syncIndicatorRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const syncIndicatorRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Update local quantity when prop changes
   useEffect(() => {

@@ -1,6 +1,7 @@
 // src/context/CartContext.tsx
 import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import { createCart, addToCart, fetchCart, updateCartLines, removeCartLines } from "@/api/shopify";
+import { buildCheckoutUrl } from "@/utils/checkout";
 
 type CartShape = {
   id: string;
@@ -40,6 +41,7 @@ type CartContextType = {
   clearCart: () => Promise<void>;
   goToCheckout: () => void;
   resetCart: () => void;
+  resetAfterCheckout: () => void;
   isLoading: boolean;
   getLineOptimisticState: (lineId: string) => LineOptimisticState;
 };
@@ -142,19 +144,36 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         if (cached && isMounted) {
           setCart(JSON.parse(cached));
         } else if (id) {
-          // on refetch le cart par id (au lieu de recréer)
-          const existing = await fetchCart(id);
-          if (existing && isMounted) {
-            setCart(existing);
-            localStorage.setItem("shopify_cart", JSON.stringify(existing));
-          } else if (isMounted) {
-            const created = await createCart([]);
-            setCart(created);
-            localStorage.setItem("shopify_cart_id", created.id);
-            localStorage.setItem("shopify_cart", JSON.stringify(created));
+          // Try to fetch existing cart by id
+          try {
+            const existing = await fetchCart(id);
+            if (existing && isMounted) {
+              setCart(existing);
+              localStorage.setItem("shopify_cart", JSON.stringify(existing));
+            } else if (isMounted) {
+              // Cart exists but is null/empty - drop invalid id and create fresh
+              console.warn("Persisted cart ID no longer valid, creating fresh cart");
+              localStorage.removeItem("shopify_cart_id");
+              localStorage.removeItem("shopify_cart");
+              const created = await createCart([]);
+              setCart(created);
+              localStorage.setItem("shopify_cart_id", created.id);
+              localStorage.setItem("shopify_cart", JSON.stringify(created));
+            }
+          } catch (fetchError) {
+            // Cart fetch failed (404, network error, etc.) - drop invalid id and create fresh
+            console.warn("Failed to fetch persisted cart, creating fresh cart:", fetchError);
+            if (isMounted) {
+              localStorage.removeItem("shopify_cart_id");
+              localStorage.removeItem("shopify_cart");
+              const created = await createCart([]);
+              setCart(created);
+              localStorage.setItem("shopify_cart_id", created.id);
+              localStorage.setItem("shopify_cart", JSON.stringify(created));
+            }
           }
         } else if (isMounted) {
-          // rien en cache → on crée un cart vide une fois pour toutes
+          // No cache → create empty cart
           const created = await createCart([]);
           setCart(created);
           localStorage.setItem("shopify_cart_id", created.id);
@@ -162,6 +181,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (e) {
         console.error("Cart init error:", e);
+        // Fallback: try to create a fresh cart even on general errors
+        if (isMounted) {
+          try {
+            const created = await createCart([]);
+            setCart(created);
+            localStorage.setItem("shopify_cart_id", created.id);
+            localStorage.setItem("shopify_cart", JSON.stringify(created));
+          } catch (fallbackError) {
+            console.error("Failed to create fallback cart:", fallbackError);
+          }
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -189,7 +219,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       try {
         const c = await fetchCart(id);
         if (c) return c;
-      } catch {}
+        // Cart ID exists but cart is null/invalid - clean up and create fresh
+        console.warn("getOrCreateCart: persisted cart ID invalid, creating fresh cart");
+        localStorage.removeItem("shopify_cart_id");
+        localStorage.removeItem("shopify_cart");
+      } catch (fetchError) {
+        // Cart fetch failed - clean up invalid ID and create fresh
+        console.warn("getOrCreateCart: failed to fetch cart, creating fresh cart:", fetchError);
+        localStorage.removeItem("shopify_cart_id");
+        localStorage.removeItem("shopify_cart");
+      }
     }
     const created = await createCart([]);
     localStorage.setItem("shopify_cart_id", created.id);
@@ -429,7 +468,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       ...prev,
       [lineId]: {
         isUpdating: true,
-        lastIntendedQuantity: 0
+        lastIntendedQuantity: 0,
+        isDirty: true,
+        syncStartTime: Date.now()
       }
     }));
 
@@ -469,7 +510,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     // Set optimistic state for all lines
     const optimisticStates: Record<string, LineOptimisticState> = {};
     lineIds.forEach(id => {
-      optimisticStates[id] = { isUpdating: true, lastIntendedQuantity: 0 };
+      optimisticStates[id] = { 
+        isUpdating: true, 
+        lastIntendedQuantity: 0,
+        isDirty: true,
+        syncStartTime: Date.now()
+      };
     });
     setLineOptimisticStates(optimisticStates);
 
@@ -493,7 +539,46 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }
 
   function goToCheckout() {
-    if (cart?.checkoutUrl) window.location.href = cart.checkoutUrl;
+    if (cart?.checkoutUrl) {
+      // Store current path for return navigation
+      localStorage.setItem('prcsm:returnPath', window.location.pathname + window.location.search);
+      
+      const checkoutUrl = buildCheckoutUrl(cart.checkoutUrl);
+      window.location.assign(checkoutUrl);
+    }
+  }
+
+  function resetAfterCheckout() {
+    // Make idempotent - check if already reset
+    if (!cart && !localStorage.getItem("shopify_cart_id")) {
+      return; // Already reset
+    }
+
+    // Clear persisted cart data
+    localStorage.removeItem("shopify_cart_id");
+    localStorage.removeItem("shopify_cart");
+    localStorage.removeItem("shopify_local_lines");
+    
+    // Clear in-memory state
+    setCart(null);
+    setOptimisticDelta(0);
+    setLineOptimisticStates({});
+    
+    // Clear internal states
+    lineInternalStates.current = {};
+    
+    // Create new cart in background (non-blocking) with error handling
+    createCart([]).then((newCart) => {
+      // Double-check component is still mounted and we haven't been reset again
+      if (newCart) {
+        setCart(newCart);
+        localStorage.setItem("shopify_cart_id", newCart.id);
+        localStorage.setItem("shopify_cart", JSON.stringify(newCart));
+      }
+    }).catch((error) => {
+      console.error("Failed to create new cart after checkout:", error);
+      // Don't throw - this is background operation
+    });
   }
 
   function resetCart() {
@@ -517,6 +602,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         clearCart,
         goToCheckout,
         resetCart,
+        resetAfterCheckout,
         isLoading,
         getLineOptimisticState,
       }}

@@ -12,6 +12,8 @@ import Archive from "./pages/Archive";
 import Shipping from "./pages/Shipping";
 import Contact from "./pages/Contact";
 import Stores from "./pages/Stores";
+import ThankYouPage from "./pages/ThankYouPage";
+import CheckoutPage from "./pages/CheckoutPage";
 
 // Component to handle redirect from /product/:handle to /produit/:handle
 function RedirectToCanonical() {
@@ -38,6 +40,8 @@ export default function App() {
         <Route path="/shipping" element={<Shipping />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/stores" element={<Stores />} />
+        <Route path="/merci" element={<ThankYouPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
       </Routes>
     </Layout>
   );
