@@ -20,12 +20,16 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
+        chip:
+          "rounded-none border-2 border-prcsm-white bg-prcsm-black text-prcsm-white font-bold shadow-none hover:border-prcsm-white focus-visible:border-prcsm-violet focus-visible:shadow-[4px_4px_0_0_#A488EF] focus-visible:ring-0 active:shadow-[2px_2px_0_0_#A488EF] active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
         sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
         icon: "size-9",
+        chipSquare: "size-9 p-0",
+        chipRect: "h-9 px-3 py-0",
       },
     },
     defaultVariants: {
