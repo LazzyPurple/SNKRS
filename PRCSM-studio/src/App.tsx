@@ -2,6 +2,7 @@ import "./App.css";
 import { Routes, Route, Navigate, useParams } from "react-router-dom";
 
 import Layout from "./components/Layout";
+import RequireAuth from "./components/RequireAuth";
 
 import ProductPage from "./pages/ProductPage";
 import Catalogue from "./pages/Catalogue";
@@ -14,6 +15,9 @@ import Contact from "./pages/Contact";
 import Stores from "./pages/Stores";
 import ThankYouPage from "./pages/ThankYouPage";
 import CheckoutPage from "./pages/CheckoutPage";
+import LoginPage from "./pages/LoginPage";
+import CallbackPage from "./pages/CallbackPage";
+import ProfilePage from "./pages/ProfilePage";
 
 // Component to handle redirect from /product/:handle to /produit/:handle
 function RedirectToCanonical() {
@@ -42,6 +46,20 @@ export default function App() {
         <Route path="/stores" element={<Stores />} />
         <Route path="/merci" element={<ThankYouPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
+        
+        {/* Authentication routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/auth/callback" element={<CallbackPage />} />
+        
+        {/* Protected routes */}
+        <Route 
+          path="/profile" 
+          element={
+            <RequireAuth>
+              <ProfilePage />
+            </RequireAuth>
+          } 
+        />
       </Routes>
     </Layout>
   );
