@@ -6,19 +6,31 @@ Boutique sneakers **headless** (Shopify Storefront) — front **React + Vite + T
 
 ## Sommaire
 
-- [Stack & prérequis](https://chatgpt.com/g/g-p-68b1ebe3f998819199587071b0a594aa-coding-projects/c/68cd4bfa-8214-8323-8816-06b24205051a#stack--pr%C3%A9requis)
-- [Démarrage rapide](https://chatgpt.com/g/g-p-68b1ebe3f998819199587071b0a594aa-coding-projects/c/68cd4bfa-8214-8323-8816-06b24205051a#d%C3%A9marrage-rapide)
-- [Variables d’environnement](https://chatgpt.com/g/g-p-68b1ebe3f998819199587071b0a594aa-coding-projects/c/68cd4bfa-8214-8323-8816-06b24205051a#variables-denvironnement)
-- [Scripts NPM utiles](https://chatgpt.com/g/g-p-68b1ebe3f998819199587071b0a594aa-coding-projects/c/68cd4bfa-8214-8323-8816-06b24205051a#scripts-npm-utiles)
-- [Structure du projet](https://chatgpt.com/g/g-p-68b1ebe3f998819199587071b0a594aa-coding-projects/c/68cd4bfa-8214-8323-8816-06b24205051a#structure-du-projet)
-- [Fonctionnalités clés](https://chatgpt.com/g/g-p-68b1ebe3f998819199587071b0a594aa-coding-projects/c/68cd4bfa-8214-8323-8816-06b24205051a#fonctionnalit%C3%A9s-cl%C3%A9s)
-- [Checkout & page Merci](https://chatgpt.com/g/g-p-68b1ebe3f998819199587071b0a594aa-coding-projects/c/68cd4bfa-8214-8323-8816-06b24205051a#checkout--page-merci)
-- [Authentification (Customer Accounts)](https://chatgpt.com/g/g-p-68b1ebe3f998819199587071b0a594aa-coding-projects/c/68cd4bfa-8214-8323-8816-06b24205051a#authentification-customer-accounts)
-- [Import catalogue (100+ paires)](https://chatgpt.com/g/g-p-68b1ebe3f998819199587071b0a594aa-coding-projects/c/68cd4bfa-8214-8323-8816-06b24205051a#import-catalogue-100-paires)
-- [Design system (brutalist)](https://chatgpt.com/g/g-p-68b1ebe3f998819199587071b0a594aa-coding-projects/c/68cd4bfa-8214-8323-8816-06b24205051a#design-system-brutalist)
-- [Tests manuels](https://chatgpt.com/g/g-p-68b1ebe3f998819199587071b0a594aa-coding-projects/c/68cd4bfa-8214-8323-8816-06b24205051a#tests-manuels)
-- [Dépannage (FAQ)](https://chatgpt.com/g/g-p-68b1ebe3f998819199587071b0a594aa-coding-projects/c/68cd4bfa-8214-8323-8816-06b24205051a#d%C3%A9pannage-faq)
-- [Roadmap](https://chatgpt.com/g/g-p-68b1ebe3f998819199587071b0a594aa-coding-projects/c/68cd4bfa-8214-8323-8816-06b24205051a#roadmap)
+Stack & prérequis
+
+Démarrage rapide
+
+Variables d’environnement
+
+Scripts NPM utiles
+
+Structure du projet
+
+Fonctionnalités clés
+
+Checkout & page Merci
+
+Authentification (Customer Accounts)
+
+Import catalogue (100+ paires)
+
+Design system (brutalist)
+
+Tests manuels
+
+Dépannage (FAQ)
+
+Roadmap
 
 ---
 
