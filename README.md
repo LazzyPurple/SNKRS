@@ -6,31 +6,31 @@ Boutique sneakers **headless** (Shopify Storefront) — front **React + Vite + T
 
 ## Sommaire
 
-- [Stack & prérequis](#stack-prerequis)
+- Stack & prérequis
 
-Démarrage rapide
+- Démarrage rapide
 
-Variables d’environnement
+- Variables d’environnement
 
-Scripts NPM utiles
+- Scripts NPM utiles
 
-Structure du projet
+- Structure du projet
 
-Fonctionnalités clés
+- Fonctionnalités clés
 
-Checkout & page Merci
+- Checkout & page Merci
 
-Authentification (Customer Accounts)
+- Authentification (Customer Accounts)
 
-Import catalogue (100+ paires)
+- Import catalogue (100+ paires)
 
-Design system (brutalist)
+- Design system (brutalist)
 
-Tests manuels
+- Tests manuels
 
-Dépannage (FAQ)
+- Dépannage (FAQ)
 
-Roadmap
+- Roadmap
 
 ---
 
