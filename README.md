@@ -6,7 +6,7 @@ Boutique sneakers **headless** (Shopify Storefront) — front **React + Vite + T
 
 ## Sommaire
 
-Stack & prérequis
+- [Stack & prérequis](#stack-prerequis)
 
 Démarrage rapide
 
