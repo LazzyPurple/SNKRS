@@ -6,29 +6,53 @@ import { MEN_SIZES, WOMEN_SIZES, KIDS_SIZES } from '@/types/shopify.types';
  * Filters to only include valid sizes for each gender category
  */
 export function normalizeVariants(variants: ShopifyVariant[]): NormalizedVariant[] {
-  return variants
+  console.log('🔍 Normalizing variants:', variants.length);
+  console.log('🔍 Raw variants data:', variants.map(v => ({
+    id: v.id,
+    title: v.title,
+    availableForSale: v.availableForSale,
+    selectedOptions: v.selectedOptions
+  })));
+
+  const normalized = variants
     .map((variant) => {
       const genderAndSize = extractGenderAndSize(variant);
       
       if (!genderAndSize) {
+        console.log('🔍 Skipping variant (no gender/size):', variant.title);
         return null;
       }
 
       const { gender, size } = genderAndSize;
       
       if (!isValidSizeForGender(size, gender)) {
+        console.log('🔍 Skipping variant (invalid size):', variant.title, { gender, size });
         return null;
       }
+
+      const available = variant.availableForSale ?? false;
+      console.log('🔍 Normalized variant:', {
+        title: variant.title,
+        gender,
+        size,
+        available,
+        originalAvailable: variant.availableForSale
+      });
 
       return {
         id: variant.id,
         gender,
         size,
-        available: variant.availableForSale ?? false,
+        available,
         originalVariant: variant,
       };
     })
     .filter((variant): variant is NormalizedVariant => variant !== null);
+
+  console.log('🔍 Final normalized variants:', normalized.length);
+  console.log('🔍 Available normalized variants:', normalized.filter(v => v.available).length);
+  
+  return normalized;
 }
 
 /**

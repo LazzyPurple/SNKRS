@@ -142,7 +142,8 @@ function buildVariants({ genders, price, styleID, vendor }) {
           .replace(/\s+/g, "")
           .toUpperCase()}-${g[0]}${size}`,
         inventory_management: "SHOPIFY",
-        inventory_policy: "deny",
+        inventory_policy: "continue", // Changed from "deny" to "continue"
+        inventory_quantity: 10, // Add initial stock quantity
         requires_shipping: true,
         taxable: true,
       });

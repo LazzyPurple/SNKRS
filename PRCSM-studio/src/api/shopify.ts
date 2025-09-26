@@ -369,5 +369,22 @@ export async function fetchProductByHandle(handle: string) {
   `;
   
   const data = await shopifyFetch<{ productByHandle: any }>(query, { handle });
-  return data.productByHandle;
+  const product = data.productByHandle;
+  
+  // Debug logging for stock investigation
+  if (product) {
+    console.log('🔍 Product fetched:', product.title);
+    console.log('🔍 Total variants:', product.variants.nodes.length);
+    console.log('🔍 Variants availability:', product.variants.nodes.map((v: any) => ({
+      id: v.id,
+      title: v.title,
+      availableForSale: v.availableForSale,
+      options: v.selectedOptions
+    })));
+    
+    const availableCount = product.variants.nodes.filter((v: any) => v.availableForSale).length;
+    console.log(`🔍 Available variants: ${availableCount}/${product.variants.nodes.length}`);
+  }
+  
+  return product;
 }
