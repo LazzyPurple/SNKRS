@@ -1,232 +1,299 @@
-// importSneakers.js
-// Node >=18 (fetch global). Sinon: npm i node-fetch et: import fetch from 'node-fetch'
-import 'dotenv/config';
-import SneaksAPI from 'sneaks-api';
+// scripts/importSneakers.js
+// Node >= 18 (fetch global). Déps: sneaks-api, dotenv
+import "dotenv/config";
+import SneaksAPI from "sneaks-api";
 
 const sneaks = new SneaksAPI();
-const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN; // ex: my-shop.myshopify.com
-const SHOPIFY_TOKEN  = process.env.SHOPIFY_TOKEN;  // Admin API access token
-const API_VERSION    = process.env.SHOPIFY_API_VERSION || '2023-10';
+const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN;
+const SHOPIFY_TOKEN = process.env.SHOPIFY_TOKEN;
+const API_VERSION = process.env.SHOPIFY_API_VERSION || "2024-07";
+const TARGET = Number(process.env.TARGET_COUNT || 100);
 
-// ---------------------------
-// Helpers: taxo & normalizers
-// ---------------------------
-const KNOWN_COLORS = [
-  'black','white','purple','green','blue','red','yellow','orange','pink','brown','grey','gray','multicolor'
-];
-
-const normalizeColor = (c) => (c === 'gray' ? 'grey' : c);
-
-function slugify(str) {
-  return String(str || '')
+// -------- utils --------
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const slug = (s = "") =>
+  String(s)
     .toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
-function stripBrandFromTitle(title, brand) {
-  if (!title) return '';
-  const t = title.trim();
-  const b = (brand || '').trim();
-  return (b && t.toLowerCase().startsWith(b.toLowerCase() + ' '))
+const stripBrandFromTitle = (title, brand) => {
+  if (!title) return "";
+  const t = title.trim(),
+    b = (brand || "").trim();
+  return b && t.toLowerCase().startsWith(b.toLowerCase() + " ")
     ? t.slice(b.length).trim()
     : t;
+};
+
+const deriveHeight = (txt = "") => {
+  const t = txt.toLowerCase();
+  if (/\b(high|retro high|hi)\b/.test(t)) return "high";
+  if (/\bmid\b/.test(t)) return "mid";
+  return "low";
+};
+
+const KNOWN_COLORS = [
+  "black",
+  "white",
+  "purple",
+  "green",
+  "blue",
+  "red",
+  "yellow",
+  "orange",
+  "pink",
+  "brown",
+  "grey",
+  "gray",
+  "multicolor",
+];
+const normColor = (c) => (c === "gray" ? "grey" : c);
+const colorsFromColorway = (cw = "") => {
+  const raw = cw.toLowerCase();
+  const out = new Set();
+  for (const c of KNOWN_COLORS) if (raw.includes(c)) out.add(normColor(c));
+  if (!out.size && /multi|rainbow|various/.test(raw)) out.add("multicolor");
+  return [...out];
+};
+
+// -------- variants (Gender × US Size) --------
+const SIZES = {
+  Men: ["7", "8", "9", "10", "11", "12"],
+  Women: ["7", "8", "9", "10", "11", "12"],
+  Kids: ["3Y", "4Y", "5Y", "6Y", "7Y"],
+};
+const sizesForGender = (g) => SIZES[g] || [];
+
+function detectGenders(p) {
+  const s = (p.gender || p.silhouette || p.title || "").toLowerCase();
+  const G = new Set();
+  if (/men|male|m\b/.test(s)) G.add("Men");
+  if (/women|female|wmn|w\b/.test(s)) G.add("Women");
+  if (/kids|gs|ps|td|y\b/.test(s)) G.add("Kids");
+  if (!G.size) G.add("Men"); // défaut simple
+  return [...G];
 }
 
-function deriveHeightFromText(text) {
-  const t = (text || '').toLowerCase();
-  if (/\b(high|retro high|hi)\b/.test(t)) return 'high';
-  if (/\bmid\b/.test(t)) return 'mid';
-  if (/\blow\b/.test(t)) return 'low';
-  return 'low'; // défaut raisonnable
-}
-
-function parseColorwayToColors(colorway = '') {
-  const raw = colorway.toLowerCase();
-  const hits = new Set();
-  for (const c of KNOWN_COLORS) {
-    if (raw.includes(c)) hits.add(normalizeColor(c));
-  }
-  if (!hits.size && /multi|rainbow|various/.test(raw)) hits.add('multicolor');
-  return Array.from(hits);
-}
-
-// ---------------------------
-// Variants: Gender x US Size
-// ---------------------------
-function sizesForGender(gender) {
-  if (gender === 'Men'   || gender === 'Women') return ['7','8','9','10','11','12'];
-  if (gender === 'Kids') return ['3Y','4Y','5Y','6Y','7Y'];
-  return [];
-}
-
-function buildVariants({ genders, price, styleCode, vendor }) {
+function buildVariants({ genders, price, styleID, vendor }) {
   const variants = [];
   const sizeValues = new Set();
-
   for (const g of genders) {
     for (const size of sizesForGender(g)) {
       variants.push({
-        option1: g,           // Gender
-        option2: size,        // US Size
-        price: String(price), // shop currency
-        sku: `${vendor?.slice(0,2).toUpperCase() || 'XX'}-${(styleCode || 'SKU').toUpperCase()}-${g[0].toUpperCase()}-${size}`.replace(/\s+/g,''),
-        inventory_management: 'shopify',
-        inventory_policy: 'deny',
-        inventory_quantity: 10, // défaut : ajuste si tu veux
+        option1: g,
+        option2: size,
+        price: String(price),
+        sku: `${(vendor || "XX").slice(0, 2).toUpperCase()}-${(styleID || "SKU")
+          .toUpperCase()
+          .replace(/\s+/g, "")}-${g[0]}-${size}`,
+        inventory_management: "shopify",
+        inventory_policy: "deny",
+        inventory_quantity: 10,
         taxable: true,
       });
       sizeValues.add(size);
     }
   }
-
   return {
     variants,
     options: [
-      { name: 'Gender',  values: genders },
-      { name: 'US Size', values: Array.from(sizeValues) },
+      { name: "Gender", values: genders },
+      { name: "US Size", values: [...sizeValues] },
     ],
   };
 }
 
-// ---------------------------
-// Tags (Identité + Apparence)
-// ---------------------------
-function buildTags({ brand, modelName, height, sport = 'lifestyle', genders = [], colors = [], material }) {
+// -------- images + tags --------
+function dedupe(arr = []) {
+  const set = new Set();
+  for (const u of arr) if (u) set.add(String(u).trim());
+  return [...set];
+}
+
+function buildImages(raw, goatImages = []) {
+  const urls = dedupe([
+    raw.thumbnail,
+    ...(raw.imageLinks || []),
+    ...(raw.media || []),
+    ...(goatImages || []),
+  ]);
+  return urls.slice(0, 8).map((src) => ({ src }));
+}
+
+const buildTags = ({ brand, modelName, height, genders, colors, material, styleID }) => {
   const tags = new Set();
+  if (brand) tags.add(`brand:${slug(brand)}`);
+  if (modelName) tags.add(`silhouette:${slug(modelName)}`);
+  if (height) tags.add(`height:${slug(height)}`);
+  tags.add("sport:lifestyle");
+  (genders || []).forEach((g) => tags.add(`gender:${g.toLowerCase()}`));
+  (colors || []).forEach((c) => tags.add(`color:${slug(c)}`));
+  if (material) tags.add(`material:${slug(material)}`);
+  if (styleID) tags.add(`style:${styleID}`);
+  return [...tags].join(",");
+};
 
-  if (brand)      tags.add(`brand:${slugify(brand)}`);
-  if (modelName)  tags.add(`silhouette:${slugify(modelName)}`);
-  if (height)     tags.add(`height:${slugify(height)}`);
-  if (sport)      tags.add(`sport:${slugify(sport)}`);
-
-  for (const g of genders) {
-    const v = g.toLowerCase();
-    if (['men','women','kids','unisex'].includes(v)) tags.add(`gender:${v}`);
-  }
-
-  for (const c of colors) tags.add(`color:${slugify(c)}`);
-
-  if (material) tags.add(`material:${slugify(material)}`);
-
-  return Array.from(tags).join(','); // Shopify attend une string
-}
-
-// ---------------------------
-// Images
-// ---------------------------
-function buildImages(product) {
-  const urls = new Set();
-  if (product.thumbnail) urls.add(product.thumbnail);
-
-  // Certaines versions de Sneaks-API exposent d'autres liens (media, imageLinks)...
-  // Ajoute ici si tu as d'autres champs d'images:
-  if (Array.isArray(product.imageLinks)) {
-    for (const u of product.imageLinks) if (u) urls.add(u);
-  }
-  if (product.media && Array.isArray(product.media)) {
-    for (const u of product.media) if (u) urls.add(u);
-  }
-
-  return Array.from(urls).map((src) => ({ src }));
-}
-
-// ---------------------------
-// Shopify: POST product
-// ---------------------------
-async function postProductToShopify(payload) {
-  const res = await fetch(`https://${SHOPIFY_DOMAIN}/admin/api/${API_VERSION}/products.json`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Shopify-Access-Token': SHOPIFY_TOKEN,
-    },
-    body: JSON.stringify(payload),
+// -------- Sneaks helpers --------
+function sneaksGetProducts(query, limit) {
+  return new Promise((resolve, reject) => {
+    sneaks.getProducts(query, limit, (err, products) => {
+      if (err) return reject(err);
+      resolve(products || []);
+    });
   });
-
-  const data = await res.json();
-  if (res.ok && data.product) {
-    console.log(`✅ Ajouté: ${data.product.title} (${data.product.id})`);
-  } else {
-    console.error('❌ Erreur Shopify:', JSON.stringify(data, null, 2));
-  }
+}
+function sneaksGetProductPrices(styleID) {
+  return new Promise((resolve) => {
+    sneaks.getProductPrices(styleID, (err, data) => {
+      if (err || !data) return resolve(null);
+      resolve(data);
+    });
+  });
 }
 
-// ---------------------------
-// Build payload from Sneaks
-// ---------------------------
-function buildProductPayloadFromSneaks(raw, genders) {
-  const vendor = raw.brand?.trim() || 'Unknown';
-  const originalTitle = raw.shoeName || raw.title || '';
-  const title = stripBrandFromTitle(originalTitle, vendor); // <-- SANS la marque
-  const modelName = title.split(/["“”']/)[0].trim();        // partie modèle avant guillemets
-  const colorway = raw.colorway || '';
-  const price = Number(raw.retailPrice || 149.99);
+// -------- Shopify (REST) --------
+async function createProduct(productPayload) {
+  const res = await fetch(
+    `https://${SHOPIFY_DOMAIN}/admin/api/${API_VERSION}/products.json`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": SHOPIFY_TOKEN,
+      },
+      body: JSON.stringify({ product: productPayload }),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw new Error(JSON.stringify(data));
+  return data.product;
+}
 
-  const height = deriveHeightFromText(originalTitle);
-  const colors = parseColorwayToColors(colorway);
-  const material = raw.material || ''; // souvent indispo → pas grave
+// -------- Build payload from Sneaks --------
+function buildProductPayload(raw, genders, goatImages) {
+  const vendor = raw.brand?.trim() || "Unknown";
+  const original = raw.shoeName || raw.title || "";
+  const title = stripBrandFromTitle(original, vendor) || original || "Sneaker";
+  const model = title.split(/["“”']/)[0].trim();
+  const colorway = raw.colorway || "";
+  const height = deriveHeight(original);
+  const colors = colorsFromColorway(colorway);
+  const material = raw.material || "";
+  const styleID = (raw.styleID || slug(original).toUpperCase()).replace(/\s+/g, "");
+  const price = Number(raw.retailPrice || 149.99);
 
   const { variants, options } = buildVariants({
     genders,
     price,
-    styleCode: raw.styleID || slugify(title).toUpperCase(),
+    styleID,
     vendor,
   });
 
-  const product = {
-    title,                  // <--- brand retirée
-    vendor,                 // brand ici
-    product_type: 'sneakers',
-    body_html: `${modelName}${colorway ? ` — ${colorway}` : ''}`,
-    options,                // [{ Gender }, { US Size }]
+  return {
+    title,
+    vendor,
+    status: "active", // visible direct
+    product_type: "sneakers",
+    body_html: `${model}${colorway ? ` — ${colorway}` : ""}`,
+    options,
     variants,
-    images: buildImages(raw),
+    images: buildImages(raw, goatImages),
     tags: buildTags({
       brand: vendor,
-      modelName,
+      modelName: model,
       height,
-      sport: 'lifestyle',
-      genders: genders.map((g) => g.toLowerCase()),
+      genders,
       colors,
       material,
+      styleID,
     }),
   };
-
-  return { product };
 }
 
-// ---------------------------
-// Import depuis Sneaks-API
-// ---------------------------
-/**
- * @param {string} query    - terme de recherche Sneaks (ex: "Dunk Low")
- * @param {number} limit    - nombre max à importer
- * @param {Array<'Men'|'Women'|'Kids'>} genders - variantes à générer
- */
-function importSneakers(query, limit = 10, genders = ['Men','Women']) {
-  sneaks.getProducts(query, limit, async (err, products) => {
-    if (err) return console.error('Sneaks error:', err);
+// -------- Main --------
+const SOURCES = [
+  "Air Force 1",
+  "Dunk Low",
+  "Jordan 1",
+  "Air Max 1",
+  "Blazer",
+  "Stan Smith",
+  "Gazelle",
+  "Yeezy",
+  "New Balance 550",
+  "Vans Old Skool",
+];
 
-    for (const p of products) {
-      try {
-        const payload = buildProductPayloadFromSneaks(p, genders);
-        await postProductToShopify(payload);
-        await new Promise((r) => setTimeout(r, 500)); // petit throttle
-      } catch (e) {
-        console.error('❌ Import error:', e);
-      }
+(async function run() {
+  if (!SHOPIFY_DOMAIN || !SHOPIFY_TOKEN) {
+    console.error("❌ Missing SHOPIFY_DOMAIN or SHOPIFY_TOKEN in .env");
+    process.exit(1);
+  }
+
+  console.log(`🎯 Import de ${TARGET} paires (sans vérification d'existant)…`);
+  const seen = new Set();
+  const picked = [];
+  const perQuery = Math.ceil(TARGET / SOURCES.length);
+
+  // 1) Collecter des candidats uniques par styleID
+  for (let i = 0; i < SOURCES.length && picked.length < TARGET; i++) {
+    const q = SOURCES[i];
+    const limit = Math.min(perQuery, TARGET - picked.length) || perQuery;
+    const batch = await sneaksGetProducts(q, Math.max(limit, 10));
+    for (const p of batch) {
+      const styleID =
+        (p.styleID || slug(p.shoeName || p.title || "").toUpperCase()).replace(/\s+/g, "");
+      if (seen.has(styleID)) continue;
+      seen.add(styleID);
+      picked.push(p);
+      if (picked.length >= TARGET) break;
     }
-  });
-}
+    await sleep(300);
+  }
 
-// ---------------------------
-// Démo: 20 produits répartis
-// ---------------------------
-// Choisis tes combos `query` + `genders` selon ce que tu veux générer:
-importSneakers('Air Force 1', 4, ['Men','Women']);
-importSneakers('Dunk Low',    4, ['Men','Women']);
-importSneakers('Jordan 1',    4, ['Men']);          // ex: uniquement Men
-importSneakers('Stan Smith',   4, ['Women']);       // ex: uniquement Women
-importSneakers('Old Skool',    4, ['Kids']);        // Kids 3Y..7Y
+  console.log(`🧾 Candidats retenus: ${picked.length}`);
+
+  // 2) Créer les produits
+  let created = 0,
+    failed = 0;
+  for (const raw of picked) {
+    const genders = detectGenders(raw);
+    let goatLinks = [];
+    try {
+      const priceData = await sneaksGetProductPrices(raw.styleID);
+      if (
+        priceData &&
+        priceData.product &&
+        priceData.product.goat &&
+        Array.isArray(priceData.product.goat.imageLinks)
+      ) {
+        goatLinks = priceData.product.goat.imageLinks;
+      }
+    } catch {
+      // ignore
+    }
+
+    const payload = buildProductPayload(raw, genders, goatLinks);
+    try {
+      const prod = await createProduct(payload);
+      created++;
+      console.log(`✅ ${created}/${TARGET} → ${prod.title} (${prod.id})`);
+      await sleep(450); // throttle REST
+    } catch (e) {
+      failed++;
+      console.error("❌ Échec création:", e.message || e);
+      await sleep(600);
+    }
+  }
+
+  console.log(`\n✅ Créés: ${created}   ❌ Échecs: ${failed}`);
+  if (created < TARGET) {
+    console.log("ℹ️ Astuce: ajoute d'autres requêtes dans SOURCES pour atteindre 100.");
+  }
+})().catch((e) => {
+  console.error("Fatal:", e);
+  process.exit(1);
+});

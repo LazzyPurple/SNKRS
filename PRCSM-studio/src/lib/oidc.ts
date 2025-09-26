@@ -33,16 +33,32 @@ function generateRandomString(length: number): string {
 }
 
 /**
+ * Base64url encode a Uint8Array
+ */
+function b64url(buffer: Uint8Array): string {
+  return btoa(String.fromCharCode(...buffer))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+}
+
+/**
+ * Generate a cryptographically secure base64url-safe random string
+ */
+function randB64url(byteLength: number): string {
+  const buffer = new Uint8Array(byteLength);
+  crypto.getRandomValues(buffer);
+  return b64url(buffer);
+}
+
+/**
  * Generate SHA256 hash and base64url encode
  */
 async function sha256(plain: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(plain);
   const hash = await crypto.subtle.digest('SHA-256', data);
-  return btoa(String.fromCharCode(...new Uint8Array(hash)))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
+  return b64url(new Uint8Array(hash));
 }
 
 /**
@@ -50,33 +66,39 @@ async function sha256(plain: string): Promise<string> {
  * Generates PKCE parameters and redirects to Shopify authorization endpoint
  */
 export async function startLogin(): Promise<void> {
-  // Generate PKCE parameters
-  const codeVerifier = generateRandomString(128);
+  // Generate PKCE parameters - use 64-char verifier as specified
+  const codeVerifier = generateRandomString(64);
   const codeChallenge = await sha256(codeVerifier);
-  const state = generateRandomString(32);
-  const nonce = generateRandomString(32);
+  const state = randB64url(16);
+  const nonce = randB64url(16);
 
   // Store PKCE parameters for later use
   localStorage.setItem(CODE_VERIFIER_KEY, codeVerifier);
   localStorage.setItem(STATE_KEY, state);
   localStorage.setItem(NONCE_KEY, nonce);
 
-  // Build authorization URL
-  const params = new URLSearchParams({
-    client_id: import.meta.env.VITE_SHOPIFY_CUSTOMER_APP_ID,
-    redirect_uri: import.meta.env.VITE_SHOPIFY_CUSTOMER_REDIRECT_URI,
-    response_type: 'code',
-    scope: 'openid email https://api.shopifyapis.com/auth/customer.graphql',
-    code_challenge: codeChallenge,
-    code_challenge_method: 'S256',
-    state,
-    nonce,
-  });
-
-  const authorizeUrl = `${import.meta.env.VITE_SHOPIFY_CUSTOMER_AUTH_URL}?${params.toString()}`;
+  // Build authorization URL using new URL() with absolute VITE_SHOPIFY_CUSTOMER_AUTH_URL
+  const authorizeUrl = new URL(import.meta.env.VITE_SHOPIFY_CUSTOMER_AUTH_URL);
+  
+  // Add required OAuth parameters
+  authorizeUrl.searchParams.set('client_id', import.meta.env.VITE_SHOPIFY_CUSTOMER_APP_ID);
+  authorizeUrl.searchParams.set('redirect_uri', import.meta.env.VITE_AUTH_REDIRECT_URI);
+  authorizeUrl.searchParams.set('response_type', 'code');
+  authorizeUrl.searchParams.set('scope', 'openid email');
+  authorizeUrl.searchParams.set('code_challenge', codeChallenge);
+  authorizeUrl.searchParams.set('code_challenge_method', 'S256');
+  authorizeUrl.searchParams.set('state', state);
+  authorizeUrl.searchParams.set('nonce', nonce);
+  
+  // Log the final authorization URL for debugging
+  console.log('OAuth Authorization URL:', authorizeUrl.toString());
+  console.log('Code verifier length:', codeVerifier.length);
+  console.log('Code challenge (base64url SHA-256):', codeChallenge);
+  console.log('State (base64url, 16 bytes):', state);
+  console.log('Nonce (base64url, 16 bytes):', nonce);
   
   // Redirect to Shopify authorization endpoint
-  window.location.href = authorizeUrl;
+  window.location.href = authorizeUrl.toString();
 }
 
 /**
@@ -114,7 +136,7 @@ export async function handleCallback(searchParams: URLSearchParams): Promise<boo
   }
 
   try {
-    // Exchange authorization code for tokens
+    // Exchange authorization code for tokens using VITE_SHOPIFY_CUSTOMER_TOKEN_URL
     const tokenResponse = await fetch(import.meta.env.VITE_SHOPIFY_CUSTOMER_TOKEN_URL, {
       method: 'POST',
       headers: {
@@ -124,14 +146,18 @@ export async function handleCallback(searchParams: URLSearchParams): Promise<boo
         grant_type: 'authorization_code',
         client_id: import.meta.env.VITE_SHOPIFY_CUSTOMER_APP_ID,
         code,
-        redirect_uri: import.meta.env.VITE_SHOPIFY_CUSTOMER_REDIRECT_URI,
+        redirect_uri: import.meta.env.VITE_AUTH_REDIRECT_URI,
         code_verifier: codeVerifier,
       }),
     });
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      console.error('Token exchange failed:', errorText);
+      console.error('Token exchange failed:', {
+        status: tokenResponse.status,
+        statusText: tokenResponse.statusText,
+        responseText: errorText
+      });
       return false;
     }
 

@@ -151,7 +151,7 @@ export default function ProductPage() {
             <div className="space-y-4">
               <h1 className="text-4xl lg:text-5xl font-bold uppercase">{product.title}</h1>
               <div className="text-3xl font-bold text-white bg-[#A488EF] inline-block px-4 py-1 border-2 border-white">
-                ${product.priceRange.minVariantPrice.amount} {product.priceRange.minVariantPrice.currencyCode}
+                {product.priceRange.minVariantPrice.amount} {product.priceRange.minVariantPrice.currencyCode}
               </div>
             </div>
 
