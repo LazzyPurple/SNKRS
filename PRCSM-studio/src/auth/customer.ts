@@ -297,3 +297,82 @@ export async function addAddress(token: string, address: CustomerAddressInput): 
 
   return result.customerAddress.id;
 }
+
+// Request password reset email
+export async function requestPasswordReset(email: string): Promise<{
+  success: boolean;
+  customerUserErrors: CustomerUserError[];
+}> {
+  const query = `
+    mutation customerRecover($email: String!) {
+      customerRecover(email: $email) {
+        customerUserErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  try {
+    const data = await shopifyFetch<{
+      customerRecover: {
+        customerUserErrors: CustomerUserError[];
+      };
+    }>(query, { email });
+
+    const result = data.customerRecover;
+    
+    return {
+      success: result.customerUserErrors.length === 0,
+      customerUserErrors: result.customerUserErrors
+    };
+  } catch (error) {
+    console.error('Password reset request failed:', error);
+    return {
+      success: false,
+      customerUserErrors: [{ field: ['email'], message: 'Erreur lors de la demande de réinitialisation. Veuillez réessayer.' }]
+    };
+  }
+}
+
+// Reset password with token
+export async function resetPassword(resetToken: string, password: string): Promise<{
+  customerAccessToken?: CustomerAccessToken;
+  customerUserErrors: CustomerUserError[];
+}> {
+  const query = `
+    mutation customerReset($id: ID!, $input: CustomerResetInput!) {
+      customerReset(id: $id, input: $input) {
+        customerAccessToken {
+          accessToken
+          expiresAt
+        }
+        customerUserErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  try {
+    const data = await shopifyFetch<{
+      customerReset: {
+        customerAccessToken?: CustomerAccessToken;
+        customerUserErrors: CustomerUserError[];
+      };
+    }>(query, { 
+      id: resetToken, 
+      input: { password } 
+    });
+
+    return data.customerReset;
+  } catch (error) {
+    console.error('Password reset failed:', error);
+    return {
+      customerAccessToken: undefined,
+      customerUserErrors: [{ field: ['password'], message: 'Erreur lors de la réinitialisation. Veuillez réessayer.' }]
+    };
+  }
+}

@@ -111,13 +111,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { success: true, errors: [] };
       } else {
         console.log('🔐 Login failed - no access token:', result.customerUserErrors);
-        return { success: false, errors: result.customerUserErrors };
+        
+        // Transform "Unidentified customer" error to a more user-friendly message
+        const transformedErrors = result.customerUserErrors.map(error => {
+          if (error.message === 'Unidentified customer') {
+            return {
+              field: Array.isArray(error.field) ? error.field : [],
+              message: 'Email ou mot de passe incorrect. Veuillez vérifier vos informations.'
+            };
+          }
+          return {
+            ...error,
+            field: Array.isArray(error.field) ? error.field : []
+          };
+        });
+        
+        return { success: false, errors: transformedErrors };
       }
     } catch (error) {
       console.error('🔐 Login failed with exception:', error);
       return { 
         success: false, 
-        errors: [{ field: ['general'], message: 'Login failed. Please try again.' }] 
+        errors: [{ field: [], message: 'Erreur de connexion. Veuillez réessayer.' }] 
       };
     }
   };
@@ -132,13 +147,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const loginResult = await login(payload.email, payload.password);
         return loginResult;
       } else {
-        return { success: false, errors: result.customerUserErrors };
+        // Normalize errors to ensure field is always an array
+        const normalizedErrors = result.customerUserErrors.map(error => ({
+          ...error,
+          field: Array.isArray(error.field) ? error.field : []
+        }));
+        return { success: false, errors: normalizedErrors };
       }
     } catch (error) {
       console.error('Registration failed:', error);
       return { 
         success: false, 
-        errors: [{ field: ['general'], message: 'Registration failed. Please try again.' }] 
+        errors: [{ field: [], message: 'Registration failed. Please try again.' }] 
       };
     }
   };
