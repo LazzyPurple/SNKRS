@@ -1,6 +1,6 @@
 // src/context/CartContext.tsx
 import React, { createContext, useContext, useEffect, useState, useRef } from "react";
-import { createCart, addToCart, fetchCart, updateCartLines, removeCartLines } from "@/api/shopify";
+import { createCart, addToCart, fetchCart, updateCartLines, removeCartLines, cartBuyerIdentityUpdate } from "@/api/shopify";
 import { buildCheckoutUrl } from "@/utils/checkout";
 
 type CartShape = {
@@ -178,6 +178,36 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           setCart(created);
           localStorage.setItem("shopify_cart_id", created.id);
           localStorage.setItem("shopify_cart", JSON.stringify(created));
+        }
+        
+        // After cart is initialized, ensure buyer identity is set if user is authenticated
+        if (isMounted) {
+          const token = localStorage.getItem('customerAccessToken');
+          const currentCartId = localStorage.getItem("shopify_cart_id");
+          
+          if (token && currentCartId) {
+            try {
+              // Get user email from localStorage or make a simple API call
+              const userDataStr = localStorage.getItem('customerData');
+              let email = '';
+              
+              if (userDataStr) {
+                try {
+                  const userData = JSON.parse(userDataStr);
+                  email = userData.email || '';
+                } catch (e) {
+                  // Ignore parsing errors
+                }
+              }
+              
+              await cartBuyerIdentityUpdate(currentCartId, {
+                customerAccessToken: token,
+                email: email
+              });
+            } catch (error) {
+              console.warn('Failed to set buyer identity during cart initialization:', error);
+            }
+          }
         }
       } catch (e) {
         console.error("Cart init error:", e);
@@ -540,6 +570,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   function goToCheckout() {
     if (cart?.checkoutUrl) {
+      // Final safety call to ensure buyer identity is set before checkout
+      const token = localStorage.getItem('customerAccessToken');
+      const cartId = localStorage.getItem('shopify_cart_id');
+      
+      if (token && cartId) {
+        // Make idempotent call to set buyer identity
+        cartBuyerIdentityUpdate(cartId, {
+          customerAccessToken: token,
+          email: '' // Email not strictly required for checkout
+        }).catch(error => {
+          console.warn('Failed to set buyer identity before checkout:', error);
+          // Continue with checkout even if this fails
+        });
+      }
+      
       // Store current path for return navigation
       localStorage.setItem('prcsm:returnPath', window.location.pathname + window.location.search);
       

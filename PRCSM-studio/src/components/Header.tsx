@@ -1,5 +1,6 @@
 import { NavLink, Link } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import logoUrl from "@/assets/logo.svg";
 
 function cx(...c: Array<string | false | undefined>) {
@@ -9,12 +10,12 @@ function cx(...c: Array<string | false | undefined>) {
 export default function Header() {
   const { getTotalQuantity } = useCart?.() ?? { getTotalQuantity: () => 0 };
   const cartCount = getTotalQuantity();
+  const { me } = useAuth();
 
   const nav = [
     { to: "/", label: "Accueil" },
     { to: "/catalogue", label: "Catalogue" },
     { to: "/lookbook", label: "Lookbook" },
-    { to: "/profile", label: "Profile" },
   ];
 
   return (
@@ -55,8 +56,44 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* Cart - right */}
-        <div className="justify-self-end">
+        {/* Cart and Auth - right */}
+        <div className="justify-self-end flex items-center gap-3">
+          {/* Auth section */}
+          {me ? (
+            <NavLink
+              to="/profile"
+              className={({ isActive }) =>
+                cx(
+                  "px-3 py-1.5 border-2 rounded-none select-none",
+                  "border-white text-prcsm-white visited:text-prcsm-white bg-prcsm-black",
+                  "transition-colors hover:border-prcsm-violet",
+                  "focus-visible:outline-none focus-visible:border-prcsm-violet focus-visible:shadow-[4px_4px_0_0_#A488EF]",
+                  isActive &&
+                    "border-prcsm-violet shadow-[4px_4px_0_0_#A488EF]"
+                )
+              }
+            >
+              Mon compte
+            </NavLink>
+          ) : (
+            <NavLink
+              to="/login"
+              className={({ isActive }) =>
+                cx(
+                  "px-3 py-1.5 border-2 rounded-none select-none",
+                  "border-white text-prcsm-white visited:text-prcsm-white bg-prcsm-black",
+                  "transition-colors hover:border-prcsm-violet",
+                  "focus-visible:outline-none focus-visible:border-prcsm-violet focus-visible:shadow-[4px_4px_0_0_#A488EF]",
+                  isActive &&
+                    "border-prcsm-violet shadow-[4px_4px_0_0_#A488EF]"
+                )
+              }
+            >
+              Se connecter
+            </NavLink>
+          )}
+
+          {/* Cart */}
           <NavLink
             to="/panier"
             className={({ isActive }) =>

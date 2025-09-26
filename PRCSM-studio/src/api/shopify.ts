@@ -202,6 +202,33 @@ export async function removeCartLines(
   return data.cartLinesRemove.cart;
 }
 
+// ---- Update cart buyer identity
+export async function cartBuyerIdentityUpdate(
+  cartId: string,
+  buyerIdentity: {
+    customerAccessToken?: string | null;
+    email?: string;
+  }
+) {
+  const query = `
+    mutation CartBuyerIdentityUpdate($cartId: ID!, $buyerIdentity: CartBuyerIdentityInput!) {
+      cartBuyerIdentityUpdate(cartId: $cartId, buyerIdentity: $buyerIdentity) {
+        cart { ${CART_FIELDS} }
+        userErrors { field message }
+      }
+    }
+  `;
+  
+  const data = await shopifyFetch<{
+    cartBuyerIdentityUpdate: { cart: any; userErrors: any[] };
+  }>(query, { cartId, buyerIdentity });
+  
+  if (data.cartBuyerIdentityUpdate.userErrors?.length)
+    console.warn("cartBuyerIdentityUpdate errors:", data.cartBuyerIdentityUpdate.userErrors);
+  
+  return data.cartBuyerIdentityUpdate.cart;
+}
+
 // ---- Fetch products
 // Helper function to build query string from filters
 function buildFilterQuery(filters?: ProductFilters): string {
