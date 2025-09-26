@@ -20,6 +20,9 @@ import RegisterPage from "./pages/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import MentionsLegales from "./pages/MentionsLegales";
+import Confidentialite from "./pages/Confidentialite";
+import CGU from "./pages/CGU";
 
 // Component to handle redirect from /product/:handle to /produit/:handle
 function RedirectToCanonical() {
@@ -62,6 +65,11 @@ export default function App() {
             </RequireAuth>
           } 
         />
+        
+        {/* Legal pages */}
+        <Route path="/mentions-legales" element={<MentionsLegales />} />
+        <Route path="/confidentialite" element={<Confidentialite />} />
+        <Route path="/cgu" element={<CGU />} />
       </Routes>
     </Layout>
   );

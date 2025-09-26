@@ -4,8 +4,8 @@ import logoUrl from "@/assets/logo.svg"; // ✅ Vite bundling-safe
 const legal = [
   { to: "/mentions-legales", label: "Mentions légales" },
   { to: "/confidentialite", label: "Confidentialité" },
-  { to: "/cgv", label: "CGU" },
-  { to: "/livraison", label: "Livraison" },
+  { to: "/cgu", label: "CGU" },
+  { to: "/shipping", label: "Livraison" },
   { to: "/contact", label: "Contact" },
 ];
 

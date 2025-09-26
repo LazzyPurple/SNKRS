@@ -58,6 +58,19 @@ export interface Customer {
   email: string;
   firstName?: string;
   lastName?: string;
+  defaultAddress?: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    company?: string;
+    address1?: string;
+    address2?: string;
+    city?: string;
+    province?: string;
+    country?: string;
+    zip?: string;
+    phone?: string;
+  };
   addresses: {
     nodes: Array<{
       id: string;
@@ -201,6 +214,19 @@ export async function getMe(token: string): Promise<{
         email
         firstName
         lastName
+        defaultAddress {
+          id
+          firstName
+          lastName
+          company
+          address1
+          address2
+          city
+          province
+          country
+          zip
+          phone
+        }
         addresses(first: 20) {
           nodes {
             id
@@ -296,6 +322,100 @@ export async function addAddress(token: string, address: CustomerAddressInput): 
   }
 
   return result.customerAddress.id;
+}
+
+// Update an existing address
+export async function updateAddress(token: string, id: string, address: CustomerAddressInput): Promise<{
+  data?: { id: string };
+  errorsNormalized: CustomerUserError[];
+}> {
+  const query = `
+    mutation customerAddressUpdate($customerAccessToken: String!, $id: ID!, $address: MailingAddressInput!) {
+      customerAddressUpdate(customerAccessToken: $customerAccessToken, id: $id, address: $address) {
+        customerAddress {
+          id
+        }
+        customerUserErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  try {
+    const data = await shopifyFetch<{
+      customerAddressUpdate: {
+        customerAddress?: { id: string };
+        customerUserErrors: CustomerUserError[];
+      };
+    }>(query, { customerAccessToken: token, id, address });
+
+    const result = data.customerAddressUpdate;
+    
+    // Normalize errors to ensure field is always an array
+    const errorsNormalized = result.customerUserErrors.map(error => ({
+      ...error,
+      field: Array.isArray(error.field) ? error.field : []
+    }));
+
+    return {
+      data: result.customerAddress,
+      errorsNormalized
+    };
+  } catch (error) {
+    console.error('Address update failed:', error);
+    return {
+      data: undefined,
+      errorsNormalized: [{ field: [], message: 'Erreur lors de la mise à jour de l\'adresse. Veuillez réessayer.' }]
+    };
+  }
+}
+
+// Delete an address
+export async function deleteAddress(token: string, id: string): Promise<{
+  data?: { deletedCustomerAddressId: string };
+  errorsNormalized: CustomerUserError[];
+}> {
+  const query = `
+    mutation customerAddressDelete($customerAccessToken: String!, $id: ID!) {
+      customerAddressDelete(customerAccessToken: $customerAccessToken, id: $id) {
+        deletedCustomerAddressId
+        customerUserErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  try {
+    const data = await shopifyFetch<{
+      customerAddressDelete: {
+        deletedCustomerAddressId?: string;
+        customerUserErrors: CustomerUserError[];
+      };
+    }>(query, { customerAccessToken: token, id });
+
+    const result = data.customerAddressDelete;
+    
+    // Normalize errors to ensure field is always an array
+    const errorsNormalized = result.customerUserErrors.map(error => ({
+      ...error,
+      field: Array.isArray(error.field) ? error.field : []
+    }));
+
+    return {
+      data: result.deletedCustomerAddressId ? { deletedCustomerAddressId: result.deletedCustomerAddressId } : undefined,
+      errorsNormalized
+    };
+  } catch (error) {
+    console.error('Address deletion failed:', error);
+    return {
+      data: undefined,
+      errorsNormalized: [{ field: [], message: 'Erreur lors de la suppression de l\'adresse. Veuillez réessayer.' }]
+    };
+  }
 }
 
 // Request password reset email
